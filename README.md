@@ -4,7 +4,7 @@ An interactive logic-circuit simulation of a seven-segment display controlled by
 
 ## Run the simulation
 
-Download the RAW file of [`seven-segment-simulator-ZAPE.html`](TP%20midterms/seven-segment-simulator-ZAPE.html) in a modern web browser. The simulation is a standalone HTML file; an internet connection is only needed to load its optional web fonts.
+Download the RAW file of [`seven-segment-simulator-ZAPE.html`](TP%20midterms/seven-segment-simulator-ZAPE.html), then open the file. The simulation is a standalone HTML file; an internet connection is only needed to load its optional web fonts.
 
 ## How to use it
 

@@ -6,8 +6,6 @@ An interactive logic-circuit simulation of a seven-segment display controlled by
 
 Open [`seven-segment-simulator-ZAPE.html`](TP%20midterms/seven-segment-simulator-ZAPE.html) in a modern web browser. The simulation is a standalone HTML file; an internet connection is only needed to load its optional web fonts.
 
-> GitHub shows the HTML source instead of running the simulation inside this README. Download the HTML file and open it locally, or publish the project with GitHub Pages to provide a live web link.
-
 ## How to use it
 
 - Toggle inputs **a–e** to select a binary input combination. **a** is the most significant bit and **e** is the least significant bit.

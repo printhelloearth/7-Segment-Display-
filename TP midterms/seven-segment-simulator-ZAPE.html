@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>7-Segment Display Simulator (5 inputs)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#E8EDF1; --panel:#F6F8FA; --ink:#14202B; --muted:#52616F; --line:#C5CFD8;
+  --accent:#1F5F8B; --accent-ink:#FFFFFF; --house:#0E1F26; --seg-off:#25363E; --seg-on:#FF4A3D;
+  --chip-on:#FFE0DB; --chip-on-ink:#8A1C12; --ok:#1E7A46; --bad:#B3261E;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#0F171D; --panel:#17222A; --ink:#E6EDF2; --muted:#93A3B0; --line:#2C3A44;
+    --accent:#6FB3E0; --accent-ink:#0F171D; --house:#071015; --seg-off:#1D2D35; --seg-on:#FF5A4D;
+    --chip-on:#4A1D19; --chip-on-ink:#FFC9C2; --ok:#5FD08D; --bad:#FF8A80;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0F171D; --panel:#17222A; --ink:#E6EDF2; --muted:#93A3B0; --line:#2C3A44;
+  --accent:#6FB3E0; --accent-ink:#0F171D; --house:#071015; --seg-off:#1D2D35; --seg-on:#FF5A4D;
+  --chip-on:#4A1D19; --chip-on-ink:#FFC9C2; --ok:#5FD08D; --bad:#FF8A80;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+main{max-width:1080px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:clamp(1.4rem,3.4vw,2rem);font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
+.sub{margin:0 0 18px;color:var(--muted);max-width:62ch}
+.layout{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:16px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h2{font-size:1rem;font-weight:600;margin:0 0 12px}
+.housing{background:var(--house);border-radius:8px;padding:18px 0 10px;display:flex;flex-direction:column;align-items:center}
+.housing svg{width:min(62%,210px);height:auto;display:block}
+.seg{fill:var(--seg-off);transition:fill .08s}
+.seg.on{fill:var(--seg-on);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--seg-on) 70%,transparent))}
+.readout{display:flex;gap:18px;align-items:baseline;justify-content:center;margin:10px 0 2px;color:#C9D5DC;font-size:.9rem}
+.readout b{font-size:1.5rem;color:#fff}
+.switches{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.sw{appearance:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:8px 0 6px;cursor:pointer;font:inherit;text-align:center}
+.sw .name{display:block;font-weight:800;font-size:1.05rem}
+.sw .val{display:block;font-size:1.3rem}
+.sw[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.sw small{display:block;font-size:.68rem;opacity:.8}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{appearance:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:focus-visible,.sw:focus-visible,.cell:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+label.speed{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);margin-top:10px}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.grp{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--bg)}
+.grp header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.grp header strong{font-size:.95rem}
+.out{min-width:2.2em;text-align:center;border-radius:6px;padding:1px 8px;border:1px solid var(--line);font-weight:700}
+.out.on{background:var(--seg-on);color:#fff;border-color:var(--seg-on)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:.8rem;padding:2px 7px;border-radius:6px;border:1px solid var(--line);color:var(--muted)}
+.chip.on{background:var(--chip-on);color:var(--chip-on-ink);border-color:var(--chip-on-ink);font-weight:700}
+.strip{margin-top:16px}
+.strip h3{font-size:.85rem;font-weight:600;margin:10px 0 6px;color:var(--muted)}
+.cells{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+@media (min-width:640px){.cells{grid-template-columns:repeat(16,1fr)}}
+.cell{appearance:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:4px 0;cursor:pointer;font:inherit;text-align:center;line-height:1.1}
+.cell .ch{display:block;font-weight:800;font-size:1.05rem}
+.cell .ix{display:block;font-size:.65rem;color:var(--muted)}
+.cell[aria-current="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.cell[aria-current="true"] .ix{color:var(--accent-ink)}
+.test{margin-top:14px;font-size:.9rem}
+.test .okv{color:var(--ok);font-weight:700}.test .badv{color:var(--bad);font-weight:700}
+.theme{position:absolute;right:16px;top:calc(12px + env(safe-area-inset-top,0px))}
+</style>
+</head>
+<body>
+<main>
+  <button class="btn theme" id="theme" type="button" aria-label="Toggle light or dark theme">Theme</button>
+  <h1>7-segment display simulator</h1>
+  <p class="sub">Flip the five inputs or pick a row. The segments are driven by the minimized AND–OR circuit, not by a lookup, so you see which product terms fire.</p>
+
+  <div class="layout">
+    <section class="panel" aria-label="Display and inputs">
+      <h2>Display</h2>
+      <div class="housing">
+        <svg viewBox="0 0 200 320" role="img" aria-label="Seven segment display" id="disp">
+          <polygon class="seg" data-s="a"/><polygon class="seg" data-s="b"/><polygon class="seg" data-s="c"/>
+          <polygon class="seg" data-s="d"/><polygon class="seg" data-s="e"/><polygon class="seg" data-s="f"/>
+          <polygon class="seg" data-s="g"/>
+        </svg>
+        <div class="readout"><span>Row <b id="rowv" class="mono">0</b></span><span>Char <b id="chv">E</b></span></div>
+      </div>
+      <div class="switches" id="switches"></div>
+      <div class="bar">
+        <button class="btn" id="prev" type="button">Previous row</button>
+        <button class="btn" id="next" type="button">Next row</button>
+        <button class="btn primary" id="play" type="button">Spell the name</button>
+      </div>
+      <label class="speed">Step time
+        <input type="range" id="speed" min="250" max="1500" step="50" value="700">
+        <span id="speedv" class="mono">700 ms</span>
+      </label>
+      <p class="test" id="test" aria-live="polite"></p>
+    </section>
+
+    <section class="panel" aria-label="Circuit">
+      <h2>Circuit: product terms and segment outputs</h2>
+      <div class="groups" id="groups"></div>
+    </section>
+  </div>
+
+  <section class="panel strip" aria-label="All 32 rows">
+    <h2>All 32 rows</h2>
+    <h3>a = 0, rows 0 to 15 (the name)</h3>
+    <div class="cells" id="cells0"></div>
+    <h3>a = 1, rows 16 to 31</h3>
+    <div class="cells" id="cells1"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  var CHARS="EduardoJoseSZape".split("").concat("HLcbhntyUF9876 54".replace(" ","").split(""));
+  var PAT="1001111 0111101 0011100 1111101 0000101 0111101 0011101 0111100 0011101 1011011 1101111 1011011 1101101 1111101 1100111 1101111 0110111 0001110 0001101 0011111 0010111 0010101 0001111 0111011 0111110 1000111 1111011 1111111 1110000 1011111 1011011 0110011".split(" ");
+  var SEGS="abcdefg".split("");
+  var TERMS={
+    a:["bcd'","bde'","bea'","bec'","dea'c'","a'b'c'd'e'"],
+    b:["cde","bca'","ea'b'","abdc'","bcd'e'","bda'e'","ac'd'e'"],
+    c:["abd","ade","ced'","ad'e'","da'b'","ea'c'","ba'c'd'"],
+    d:["db'","dc'","ea'","a'c'","ade'","ba'd'","bc'e'","eb'c'","bced'"],
+    e:["ca'","a'b'","a'e'","b'e'","aec'","ced'","c'd'e'"],
+    f:["bd","abe","ade","bec'","ac'd'","acb'e'","b'c'd'e'"],
+    g:["bd","be","a'd'","acb'","dec'","ab'e'","ca'e'"]
+  };
+  var INPUTS=["a","b","c","d","e"];
+
+  function parse(s){var r=[];for(var i=0;i<s.length;i++){var n=0;if(s[i+1]==="'"){n=1;i++;}r.push([s[i-n],n]);}return r;}
+  var PARSED={};SEGS.forEach(function(s){PARSED[s]=TERMS[s].map(function(t){return{text:t.replace(/'/g,"\u2032"),lits:parse(t)};});});
+  function valuesOf(m){return{a:(m>>4)&1,b:(m>>3)&1,c:(m>>2)&1,d:(m>>1)&1,e:m&1};}
+  function evalSeg(s,v){var fired=PARSED[s].map(function(t){return t.lits.every(function(l){return v[l[0]]===(l[1]?0:1);});});return{fired:fired,out:fired.some(Boolean)?1:0};}
+
+  // segment geometry
+  var X1=30,X2=170,YT=30,YM=160,YB=290,T=9;
+  function hex(x1,x2,y){return[[x1,y],[x1+T,y-T],[x2-T,y-T],[x2,y],[x2-T,y+T],[x1+T,y+T]];}
+  function vhex(x,y1,y2){return[[x,y1],[x+T,y1+T],[x+T,y2-T],[x,y2],[x-T,y2-T],[x-T,y1+T]];}
+  var G={a:hex(X1+6,X2-6,YT),g:hex(X1+6,X2-6,YM),d:hex(X1+6,X2-6,YB),
+         b:vhex(X2,YT+6,YM-6),c:vhex(X2,YM+6,YB-6),f:vhex(X1,YT+6,YM-6),e:vhex(X1,YM+6,YB-6)};
+  var segEl={};
+  document.querySelectorAll("#disp .seg").forEach(function(p){var s=p.getAttribute("data-s");segEl[s]=p;p.setAttribute("points",G[s].map(function(q){return q.join(",");}).join(" "));});
+
+  var row=0,timer=null;
+  var swWrap=document.getElementById("switches"),swEl={};
+  INPUTS.forEach(function(n,i){
+    var b=document.createElement("button");b.type="button";b.className="sw";
+    b.innerHTML='<span class="name">'+n+'</span><span class="val mono">0</span><small>'+(i===0?"MSB":i===4?"LSB":"")+'&nbsp;</small>';
+    b.addEventListener("click",function(){setRow(row^(1<<(4-i)),true);});
+    swWrap.appendChild(b);swEl[n]=b;
+  });
+
+  var grpWrap=document.getElementById("groups"),grpEl={};
+  SEGS.forEach(function(s){
+    var g=document.createElement("div");g.className="grp";
+    var h='<header><strong>S'+s+' <span style="font-weight:400;color:var(--muted)">('+TERMS[s].length+' terms)</span></strong><span class="out mono" data-out="'+s+'">0</span></header><div class="chips">';
+    PARSED[s].forEach(function(t,i){h+='<span class="chip mono" data-t="'+s+i+'">'+t.text+'</span>';});
+    g.innerHTML=h+'</div>';grpWrap.appendChild(g);grpEl[s]=g;
+  });
+
+  var cellEl=[];
+  for(var m=0;m<32;m++){(function(m){
+    var c=document.createElement("button");c.type="button";c.className="cell";
+    c.innerHTML='<span class="ch">'+CHARS[m]+'</span><span class="ix mono">'+m+'</span>';
+    c.setAttribute("aria-label","Row "+m+", character "+CHARS[m]);
+    c.addEventListener("click",function(){setRow(m,true);});
+    document.getElementById(m<16?"cells0":"cells1").appendChild(c);cellEl.push(c);
+  })(m);}
+
+  function render(){
+    var v=valuesOf(row);
+    INPUTS.forEach(function(n){var b=swEl[n];b.setAttribute("aria-pressed",String(v[n]===1));b.querySelector(".val").textContent=v[n];});
+    var mismatch=false;
+    SEGS.forEach(function(s,k){
+      var r=evalSeg(s,v);
+      segEl[s].classList.toggle("on",r.out===1);
+      var o=grpEl[s].querySelector('[data-out="'+s+'"]');o.textContent=r.out;o.classList.toggle("on",r.out===1);
+      r.fired.forEach(function(f,i){grpEl[s].querySelector('[data-t="'+s+i+'"]').classList.toggle("on",f);});
+      if(String(r.out)!==PAT[row][k])mismatch=true;
+    });
+    document.getElementById("rowv").textContent=row;
+    document.getElementById("chv").textContent=CHARS[row];
+    cellEl.forEach(function(c,i){c.setAttribute("aria-current",String(i===row));});
+    if(mismatch)console.warn("Circuit output differs from truth table at row",row);
+  }
+  function setRow(m,manual){if(manual&&timer)stop();row=((m%32)+32)%32;render();}
+
+  var playBtn=document.getElementById("play"),speed=document.getElementById("speed");
+  function stop(){clearInterval(timer);timer=null;playBtn.textContent="Spell the name";}
+  function start(){
+    stop();setRow(0,false);playBtn.textContent="Stop";
+    timer=setInterval(function(){
+      if(row>=15){stop();return;}
+      setRow(row+1,false);
+    },+speed.value);
+  }
+  playBtn.addEventListener("click",function(){if(timer)stop();else start();});
+  speed.addEventListener("input",function(){document.getElementById("speedv").textContent=speed.value+" ms";if(timer)start();});
+  document.getElementById("prev").addEventListener("click",function(){setRow(row-1,true);});
+  document.getElementById("next").addEventListener("click",function(){setRow(row+1,true);});
+
+  // self-test: run the circuit on every row and compare with the truth table
+  var bad=0;
+  for(var mm=0;mm<32;mm++){var vv=valuesOf(mm);SEGS.forEach(function(s,k){if(String(evalSeg(s,vv).out)!==PAT[mm][k])bad++;});}
+  var t=document.getElementById("test");
+  t.innerHTML=bad===0?'<span class="okv">Self-test passed:</span> all 32 rows \u00d7 7 segments match the truth table.':'<span class="badv">Self-test failed:</span> '+bad+' output bits differ from the truth table.';
+
+  // theme toggle
+  var root=document.documentElement,tb=document.getElementById("theme");
+  tb.addEventListener("click",function(){
+    var dark=root.getAttribute("data-theme")==="dark"||(root.getAttribute("data-theme")!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);
+    root.setAttribute("data-theme",dark?"light":"dark");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
